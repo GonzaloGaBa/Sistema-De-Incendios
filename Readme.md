@@ -7,136 +7,202 @@ El código proporcionado es un programa en C++ que simula el funcionamiento de u
 ## Configuración de pines
 ---
 ~~~c++
-// Configuración de los pines para el visualizador de 7 segmentos
-#define PIN_A 10
-#define PIN_B 11
-#define PIN_C 5
-#define PIN_D 6
-#define PIN_E 7
-#define PIN_F 9
-#define PIN_G 8
+// Configuración del control remoto IR
+int RECV_PIN = 11;
+IRrecv irrecv(RECV_PIN);
+decode_results results;
 
-//Configuración de los pines para los botones y LEDs
-#define PIN_BOTON_SUBIR 2
-#define PIN_BOTON_BAJAR 3
-#define PIN_BOTON_PAUSAR 4
-#define PIN_LED_VERDE 13
-#define PIN_LED_ROJO 12
+// Configuración del display LCD
+LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
+
+// Configuración del sensor de temperatura
+int sensorPin = A0;
+
+// Configuración del servo motor
+int servoPin = 9;
+Servo servo;
+
+// Configuración de los leds
+int ledPin1 = 8;
+int ledPin2 = 10;
+
+
 ~~~
 ## Variables
 ~~~c++
-//Variables para el control del montacargas
-int pisoActual = 0; // El montacargas comienza en el piso 1
-int pisoAnterior = 1; // Variable para almacenar el piso anterior
-bool enMovimiento = false;
-bool enPausa = false;
-bool mostrarMensaje = false; // Variable para controlar la visualización del mensaje.
+// Umbral de temperatura para detectar incendio
+int temperaturaUmbral = 60;
+
+// Rangos de temperatura para cada estación
+int temperaturaInviernoMin = -10;
+int temperaturaInviernoMax = 10;
+int temperaturaPrimaveraMin = 10;
+int temperaturaPrimaveraMax = 25;
+int temperaturaVeranoMin = 25;
+int temperaturaVeranoMax = 40;
+int temperaturaOtonioMin = 10;
+int temperaturaOtonioMax = 25;
 ~~~
-Aquí se declaran las variables utilizadas para controlar el montacargas. pisoActual y pisoAnterior almacenan el número de piso actual y el piso anterior, respectivamente. enMovimiento y enPausa son variables booleanas que indican si el montacargas está en movimiento o en pausa. mostrarMensaje se utiliza para controlar la visualización de un mensaje.
+Se define el pin en el que está conectado el receptor IR (RECV_PIN) y se crea una instancia de IRrecv llamada irrecv para recibir las señales del control remoto.
+Se crea una instancia de LiquidCrystal llamada lcd para controlar el display LCD. Se especifican los pines de conexión del display.
+Se define el pin en el que está conectado el sensor de temperatura (sensorPin).
+Se define el pin en el que está conectado el servo motor (servoPin) y se crea una instancia de Servo llamada servo para controlarlo.
+Se definen los pines en los que están conectados los leds de alarma (ledPin1 y ledPin2).
+Se establece el umbral de temperatura (temperaturaUmbral) a partir del cual se considera que hay un incendio.
+Se definen los rangos de temperatura para cada estación del año.
 
 ## Función de configuración (setup)
 ~~~c++
 void setup() {
-  // Configuración de los pines
-  pinMode(PIN_A, OUTPUT);
-  pinMode(PIN_B, OUTPUT);
-  pinMode(PIN_C, OUTPUT);
-  pinMode(PIN_D, OUTPUT);
-  pinMode(PIN_E, OUTPUT);
-  pinMode(PIN_F, OUTPUT);
-  pinMode(PIN_G, OUTPUT);
+  // Inicialización del control remoto IR
+  irrecv.enableIRIn();
 
-  pinMode(PIN_BOTON_SUBIR, INPUT_PULLUP);
-  pinMode(PIN_BOTON_BAJAR, INPUT_PULLUP);
-  pinMode(PIN_BOTON_PAUSAR, INPUT_PULLUP);
+  // Inicialización del display LCD
+  lcd.begin(16, 2);
+  lcd.setCursor(0, 0);
+  lcd.print("Temp:");
+  lcd.setCursor(0, 1);
+  lcd.print("Estacion:");
 
-  pinMode(PIN_LED_VERDE, OUTPUT);
-  pinMode(PIN_LED_ROJO, OUTPUT);
+  // Inicialización del servo motor
+  servo.attach(servoPin);
 
-  // Inicialización del monitor serial
-  Serial.begin(9600);
-  Serial.println("El montacargas está listo para su uso.");
-  mostrarMensaje = true;
+  // Configuración de los leds
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
 }
 ~~~
-En la función setup(), se configuran los pines utilizados en el sistema. Los pines del visualizador de 7 segmentos se configuran como salidas, mientras que los pines de los botones y los LEDs se configuran como entradas (con resistencias de pull-up internas habilitadas mediante INPUT_PULLUP).
+En esta parte del código se realiza la inicialización de los componentes necesarios para el funcionamiento del sistema de incendio. Se habilita el control remoto IR, se configura y muestra el display LCD, se habilita el control del servo motor y se configuran los pines de los leds como salidas.
 
 También se inicializa el monitor serial para permitir la comunicación con una computadora. Se establece una velocidad de transmisión de 9600 baudios. Luego, se imprime un mensaje por el monitor serial para indicar que el montacargas está listo para su uso, y se establece la variable mostrarMensaje en true para que se muestre el mensaje.
 
 ## Función principal (loop)
 ~~~c++
 void loop() {
-  // Actualizar el display de 7 segmentos
-  actualizarDisplay();
+  // Lectura de temperatura
+  int temperatura = obtenerTemperatura();
 
-  // Comprobar el estado de los botones
-  bool botonSubirPresionado = digitalRead(PIN_BOTON_SUBIR) == LOW;
-  bool botonBajarPresionado = digitalRead(PIN_BOTON_BAJAR) == LOW;
-  bool botonPausarPresionado = digitalRead(PIN_BOTON_PAUSAR) == LOW;
+  // Mostrar temperatura en el display LCD
+  lcd.setCursor(6, 0);
+  lcd.print(temperatura);
 
-  if (botonSubirPresionado) 
-  {
-    if (pisoActual < 10) {
-      pisoActual++;
-      iniciarMovimiento();
+  // Determinar estación del año
+  String estacion = obtenerEstacion(temperatura);
+
+  // Mostrar estación del año en el display LCD
+  lcd.setCursor(10, 1);
+  lcd.print(estacion);
+
+  // Verificar si se ha detectado un incendio
+  if (temperatura > temperaturaUmbral) {
+    activarAlarma();
+  } else {
+    desactivarAlarma();
+  }
+
+  // Verificar si se ha recibido una señal del control remoto IR
+  if (irrecv.decode(&results)) {
+    // Verificar el código del botón presionado
+    switch (results.value) {
+      case 0xFFA25D:  // Código del botón para activar el sistema de incendio
+        activarSistemaIncendio();
+        break;
+      case 0xFF629D:  // Código del botón para desactivar el sistema de incendio
+        desactivarSistemaIncendio();
+        break;
+      // Agrega más casos para otros botones del control remoto si es necesario
     }
-  }
-
-  if (botonBajarPresionado) 
-  {
-    if (pisoActual > 0) {
-      pisoActual--;
-      iniciarMovimiento();
-    }
-  }
-
-  if (botonPausarPresionado ) {
-    pausarMovimiento();
-  }
-
-  // Detener el montacargas si ha llegado al piso deseado (piso 10 en este caso)
-  if (pisoActual == 10) {
-    detenerMontacargas();
-  }
-  // Mostrar el piso actual por el monitor serial solo si ha cambiado
-  if (pisoActual != pisoAnterior && mostrarMensaje) {
-    Serial.print("Piso actual: ");
-    Serial.println(pisoActual);
-    pisoAnterior = pisoActual;
-    mostrarMensaje = false; // Reiniciar la variable para evitar repeticiones
+    irrecv.resume();  // Recibir el siguiente valor
   }
 }
 ~~~
-En la función loop(), se realiza el funcionamiento principal del montacargas. En primer lugar, se llama a la función actualizarDisplay() para mostrar el número del piso actual en el visualizador de 7 segmentos.
+La función loop() se encarga de leer la temperatura, mostrarla en el display LCD, determinar la estación del año, verificar si hay un incendio, y responder a las señales del control remoto IR para activar o desactivar el sistema de incendio. El bucle se repite continuamente para monitorear y actualizar la información según sea necesario.
+## ObtenerTemperatura():
+int obtenerTemperatura() {
+  // Realizar la lectura del sensor de temperatura y calcular la temperatura en grados Celsius
+  int lectura = analogRead(sensorPin);
+  float voltaje = lectura * 5.0 / 1024.0;
+  float temperaturaCelsius = (voltaje - 0.5) * 100;
 
-Luego, se comprueba el estado de los botones. Si el botón "Subir" es presionado y el piso actual es menor a 10, se incrementa el número del piso actual y se llama a la función iniciarMovimiento() para iniciar el movimiento del montacargas. Si el botón "Bajar" es presionado y el piso actual es mayor a 0, se decrementa el número del piso actual y se llama a la función iniciarMovimiento().
+  return (int)temperaturaCelsius;
+}
+Esta función lee el valor del sensor de temperatura y realiza cálculos para convertir el valor leído en grados Celsius. Devuelve la temperatura como un entero.
 
-Si el botón "Pausar" es presionado, se llama a la función pausarMovimiento() para pausar o reanudar el movimiento del montacargas.
+## ObtenerEstacion: 
+String obtenerEstacion(int temperatura) {
+  if (temperatura >= temperaturaInviernoMin && temperatura <= temperaturaInviernoMax) {
+    return "Invierno";
+  } else if (temperatura >= temperaturaPrimaveraMin && temperatura <= temperaturaPrimaveraMax) {
+    return "Primavera";
+  } else if (temperatura >= temperaturaVeranoMin && temperatura <= temperaturaVeranoMax) {
+    return "Verano";
+  } else if (temperatura >= temperaturaOtonioMin && temperatura <= temperaturaOtonioMax) {
+    return "Otonio";
+  } else {
+    return "Desconocida";
+  }
+}
+Esta función recibe un valor de temperatura y determina la estación del año en función de los rangos de temperatura establecidos. Devuelve un objeto String que representa la estación correspondiente (por ejemplo, "Invierno", "Primavera", "Verano", "Otonio" o "Desconocida").
 
-A continuación, se verifica si el montacargas ha llegado al piso deseado (piso 10 en este caso) y se llama a la función detenerMontacargas() para detenerlo si es necesario.
+## ActivarAlarma: 
+void activarAlarma() {
+  // Activar el servo motor y los leds de alarma
+  servo.write(90);
+  digitalWrite(ledPin1, HIGH);
+  digitalWrite(ledPin2, HIGH);
 
-Finalmente, se verifica si el número del piso actual ha cambiado y se muestra por el monitor serial si es el caso. La variable mostrarMensaje se reinicia a false para evitar repeticiones en la visualización del mensaje.
+  // Mostrar mensaje de alarma en el display LCD
+  lcd.setCursor(0, 1);
+  lcd.print("ALARMA!");
 
-## Funciones auxiliares
-El código también incluye varias funciones auxiliares que realizan tareas específicas:
+  delay(1000);  // Esperar 1 segundo
+}
+Esta función activa el servo motor y los LEDs de alarma. Además, muestra un mensaje de "ALARMA!" en el display LCD. Luego, espera 1 segundo utilizando delay().
 
-### ActualizarDisplay(): 
-Esta función actualiza el visualizador de 7 segmentos para mostrar el número del piso actual.
+## DesactivarAlarma: 
+void desactivarAlarma() {
+  // Desactivar el servo motor y los leds de alarma
+  servo.write(0);
+  digitalWrite(ledPin1, LOW);
+  digitalWrite(ledPin2, LOW);
 
-### IniciarMovimiento(): 
-Esta función se encarga de iniciar el movimiento del montacargas. Establece la variable enMovimiento en true, enciende el LED verde y apaga el LED rojo. Luego, se introduce un retardo de 3 segundos para simular el tiempo de trayecto entre pisos.
+  // Borrar mensaje de alarma en el display LCD
+  lcd.setCursor(0, 1);
+  lcd.print("        ");
+}
+Esta función desactiva el servo motor y los LEDs de alarma. También borra el mensaje de alarma en el display LCD, dejando un espacio en blanco en su lugar.
 
-### PausarMovimiento(): 
-Esta función se utiliza para pausar o reanudar el movimiento del montacargas. Cambia el estado de la variable enPausa y controla el encendido y apagado de los LEDs rojo y verde, respectivamente.
+## ActivarSistemaIncendio: 
+void activarSistemaIncendio() {
+  // Aquí puedes agregar el código necesario para activar el sistema de incendio
 
-### DetenerMontacargas(): 
-Esta función detiene el montacargas. Establece la variable enMovimiento en false, apaga ambos LEDs y muestra un mensaje en el visualizador de 7 segmentos indicando que el montacargas ha llegado al piso deseado.
+  // Por ejemplo, encender una sirena o activar un sistema de rociadores de agua
+  // Puedes agregar aquí el código específico para tu sistema de incendio
+  // Asegúrate de conectar los componentes necesarios y configurarlos correctamente
 
-Estas funciones contribuyen al funcionamiento integral del código, controlando el estado del montacargas, su movimiento, la visualización de información y la interacción con los botones y LEDs.
+  // Ejemplo: encender un led para simular la activación del sistema de incendio
+  digitalWrite(ledPin1, HIGH);
+  digitalWrite(ledPin2, HIGH);
+}
+Esta función contiene el código necesario para activar el sistema de incendio. Puedes agregar aquí el código específico para tu sistema, como encender una sirena o activar un sistema de rociadores de agua. En el ejemplo proporcionado, se encienden dos LEDs para simular la activación del sistema de incendio.
 
-## Conclusion:
-En resumen, el código proporcionado implementa la lógica necesaria para simular el funcionamiento de un montacargas controlado por botones y LEDs. Utiliza un visualizador de 7 segmentos para mostrar el piso actual y permite subir, bajar y pausar el montacargas mediante los botones. Es un ejemplo sencillo pero ilustrativo de cómo utilizar Arduino para crear sistemas interactivos.
+## DesactivarSistemaIncendio: 
+void desactivarSistemaIncendio() {
+  // Aquí puedes agregar el código necesario para desactivar el sistema de incendio
+
+  // Por ejemplo, apagar la sirena o detener el sistema de rociadores de agua
+  // Puedes agregar aquí el código específico para tu sistema de incendio
+  // Asegúrate de detener adecuadamente los componentes activados anteriormente
+
+  // Ejemplo: apagar el led que simula la activación del sistema de incendio
+  digitalWrite(ledPin1, LOW);
+  digitalWrite(ledPin2, LOW);
+}
+Esta función contiene el código necesario para desactivar el sistema de incendio. Puedes agregar aquí el código específico para detener adecuadamente los componentes activados anteriormente en tu sistema. En el ejemplo proporcionado, se apagan los LEDs que simulaban la activación del sistema de incendio.
+
+
+En resumen, estas funciones realizan tareas específicas dentro del programa, como obtener la temperatura, determinar la estación del año, activar y desactivar la alarma y el sistema de incendio, y controlar los componentes electrónicos conectados, como el servo motor, los LEDs y el display LCD.
 ---
 
 ### Link del proyecto
-(https://www.tinkercad.com/things/3XWsC0kZX4A-brave-allis/editel?sharecode=Yl2GdbfGAnVYPyJau5jOaADwWcix08luKyl6xvmoB68)
+(https://www.tinkercad.com/things/lRRrSzQQIFm-parcial-sistema-de-incendios/editel?sharecode=glaB8LqB2pGphXAPscwfS5fS8gQ_hjcV4z2o-xgVHiA)
