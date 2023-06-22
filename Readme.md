@@ -1,5 +1,5 @@
 ## Sistema de incendios
-![(img/Montacargas.png)](Imagen/Montacargas.png)
+[![(img/Montacargas.png)](Imagen/Montacargas.png)](https://github.com/GonzaloGaBa/Sistema-De-Incendios/tree/e2e204e75155368aa516d8e9c840c5ae6814e3d5/Imagen)
 ---
 ## Descripcion:
 El código proporcionado es un programa en C++ que simula el funcionamiento de un montacargas controlado por botones y LEDs. Utiliza un visualizador de 7 segmentos para mostrar el piso actual y LEDs para indicar el estado (en movimiento o en pausa). Los botones permiten subir, bajar y pausar el montacargas. El programa se ejecuta en una placa Arduino y utiliza el monitor serial para mostrar mensajes informativos. En resumen, es una simulación interactiva de un montacargas con control de pisos.
