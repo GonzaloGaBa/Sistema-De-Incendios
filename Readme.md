@@ -214,7 +214,3 @@ Esta función contiene el código necesario para desactivar el sistema de incend
 
 
 En resumen, estas funciones realizan tareas específicas dentro del programa, como obtener la temperatura, determinar la estación del año, activar y desactivar la alarma y el sistema de incendio, y controlar los componentes electrónicos conectados, como el servo motor, los LEDs y el display LCD.
----
-
-### Link del proyecto
-(https://www.tinkercad.com/things/lRRrSzQQIFm-parcial-sistema-de-incendios/editel?sharecode=glaB8LqB2pGphXAPscwfS5fS8gQ_hjcV4z2o-xgVHiA)
