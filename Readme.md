@@ -183,13 +183,7 @@ Esta función desactiva el servo motor y los LEDs de alarma. También borra el m
 ## ActivarSistemaIncendio: 
 ~~~c++
 void activarSistemaIncendio() {
-  // Aquí puedes agregar el código necesario para activar el sistema de incendio
-
-  // Por ejemplo, encender una sirena o activar un sistema de rociadores de agua
-  // Puedes agregar aquí el código específico para tu sistema de incendio
-  // Asegúrate de conectar los componentes necesarios y configurarlos correctamente
-
-  // Ejemplo: encender un led para simular la activación del sistema de incendio
+  // Aquí puedes agregar el có
   digitalWrite(ledPin1, HIGH);
   digitalWrite(ledPin2, HIGH);
 }
@@ -199,13 +193,7 @@ Esta función contiene el código necesario para activar el sistema de incendio.
 ## DesactivarSistemaIncendio: 
 ~~~c++  
 void desactivarSistemaIncendio() {
-  // Aquí puedes agregar el código necesario para desactivar el sistema de incendio
-
-  // Por ejemplo, apagar la sirena o detener el sistema de rociadores de agua
-  // Puedes agregar aquí el código específico para tu sistema de incendio
-  // Asegúrate de detener adecuadamente los componentes activados anteriormente
-
-  // Ejemplo: apagar el led que simula la activación del sistema de incendio
+  
   digitalWrite(ledPin1, LOW);
   digitalWrite(ledPin2, LOW);
 }
