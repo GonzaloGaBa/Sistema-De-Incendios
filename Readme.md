@@ -118,6 +118,7 @@ void loop() {
 ~~~
 La función loop() se encarga de leer la temperatura, mostrarla en el display LCD, determinar la estación del año, verificar si hay un incendio, y responder a las señales del control remoto IR para activar o desactivar el sistema de incendio. El bucle se repite continuamente para monitorear y actualizar la información según sea necesario.
 ## ObtenerTemperatura():
+~~~c++
 int obtenerTemperatura() {
   // Realizar la lectura del sensor de temperatura y calcular la temperatura en grados Celsius
   int lectura = analogRead(sensorPin);
@@ -126,9 +127,11 @@ int obtenerTemperatura() {
 
   return (int)temperaturaCelsius;
 }
+~~~
 Esta función lee el valor del sensor de temperatura y realiza cálculos para convertir el valor leído en grados Celsius. Devuelve la temperatura como un entero.
 
 ## ObtenerEstacion: 
+~~~c++  
 String obtenerEstacion(int temperatura) {
   if (temperatura >= temperaturaInviernoMin && temperatura <= temperaturaInviernoMax) {
     return "Invierno";
@@ -142,9 +145,11 @@ String obtenerEstacion(int temperatura) {
     return "Desconocida";
   }
 }
+~~~
 Esta función recibe un valor de temperatura y determina la estación del año en función de los rangos de temperatura establecidos. Devuelve un objeto String que representa la estación correspondiente (por ejemplo, "Invierno", "Primavera", "Verano", "Otonio" o "Desconocida").
 
 ## ActivarAlarma: 
+~~~c++  
 void activarAlarma() {
   // Activar el servo motor y los leds de alarma
   servo.write(90);
@@ -157,9 +162,11 @@ void activarAlarma() {
 
   delay(1000);  // Esperar 1 segundo
 }
+~~~
 Esta función activa el servo motor y los LEDs de alarma. Además, muestra un mensaje de "ALARMA!" en el display LCD. Luego, espera 1 segundo utilizando delay().
 
 ## DesactivarAlarma: 
+~~~c++
 void desactivarAlarma() {
   // Desactivar el servo motor y los leds de alarma
   servo.write(0);
@@ -170,9 +177,11 @@ void desactivarAlarma() {
   lcd.setCursor(0, 1);
   lcd.print("        ");
 }
+~~~
 Esta función desactiva el servo motor y los LEDs de alarma. También borra el mensaje de alarma en el display LCD, dejando un espacio en blanco en su lugar.
 
 ## ActivarSistemaIncendio: 
+~~~c++
 void activarSistemaIncendio() {
   // Aquí puedes agregar el código necesario para activar el sistema de incendio
 
@@ -184,9 +193,11 @@ void activarSistemaIncendio() {
   digitalWrite(ledPin1, HIGH);
   digitalWrite(ledPin2, HIGH);
 }
+~~~
 Esta función contiene el código necesario para activar el sistema de incendio. Puedes agregar aquí el código específico para tu sistema, como encender una sirena o activar un sistema de rociadores de agua. En el ejemplo proporcionado, se encienden dos LEDs para simular la activación del sistema de incendio.
 
 ## DesactivarSistemaIncendio: 
+~~~c++  
 void desactivarSistemaIncendio() {
   // Aquí puedes agregar el código necesario para desactivar el sistema de incendio
 
@@ -198,6 +209,7 @@ void desactivarSistemaIncendio() {
   digitalWrite(ledPin1, LOW);
   digitalWrite(ledPin2, LOW);
 }
+~~~
 Esta función contiene el código necesario para desactivar el sistema de incendio. Puedes agregar aquí el código específico para detener adecuadamente los componentes activados anteriormente en tu sistema. En el ejemplo proporcionado, se apagan los LEDs que simulaban la activación del sistema de incendio.
 
 
