@@ -212,7 +212,11 @@ void desactivarSistemaIncendio()
   
 }
 ~~~
+
+## Conclusion:
 Esta función contiene el código necesario para desactivar el sistema de incendio. Configurado para que con el boton 2 del control remoto se desactive el sistema
-
-
 En resumen, estas funciones realizan tareas específicas dentro del programa, como obtener la temperatura, determinar la estación del año, activar y desactivar la alarma y el sistema de incendio, y controlar los componentes electrónicos conectados, como el servo motor, los LEDs, control remoto y el display LCD.
+---
+
+### Link del proyecto
+(https://www.tinkercad.com/things/4XCZKQG9MLX-mighty-robo/editel?sharecode=XT5TALEnO7PWuTq2M5DnwCkb1_WFPRxHD6-KmcJNfNg)
