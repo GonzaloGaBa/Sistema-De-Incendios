@@ -1,12 +1,14 @@
 // C++ code
-#include <IRremote.h>
 #include <LiquidCrystal.h>
 #include <Servo.h>
+#include <IRremote.h>
+
+#define Tecla_1 0xEF10BF00
+#define Tecla_2 0xEE11BF00
+
 
 // Configuración del control remoto IR
-int RECV_PIN = 11;
-IRrecv irrecv(RECV_PIN);
-decode_results results;
+int IR = 11; // Pin digital al que está conectado el receptor IR
 
 // Configuración del display LCD
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
@@ -19,25 +21,30 @@ int servoPin = 9;
 Servo servo;
 
 // Configuración de los leds
-int ledPin1 = 8;
-int ledPin2 = 10;
+int LED = 13;
+int LED2 = 12;
 
 // Umbral de temperatura para detectar incendio
 int temperaturaUmbral = 60;
 
 // Rangos de temperatura para cada estación
-int temperaturaInviernoMin = -10;
+int temperaturaInviernoMin = -20;
 int temperaturaInviernoMax = 10;
-int temperaturaPrimaveraMin = 10;
-int temperaturaPrimaveraMax = 25;
-int temperaturaVeranoMin = 25;
-int temperaturaVeranoMax = 40;
+int temperaturaPrimaveraMin = 25;
+int temperaturaPrimaveraMax = 35;
+int temperaturaVeranoMin = 35;
+int temperaturaVeranoMax = 50;
 int temperaturaOtonioMin = 10;
 int temperaturaOtonioMax = 25;
 
-void setup() {
-  // Inicialización del control remoto IR
-  irrecv.enableIRIn();
+// Estado del sistema de incendios
+bool sistemaIncendioActivo = false;
+
+void setup()
+{
+  Serial.begin(9600);
+  IrReceiver.begin(IR, DISABLE_LED_FEEDBACK);
+  // Iniciar la recepción de señales IR
 
   // Inicialización del display LCD
   lcd.begin(16, 2);
@@ -50,79 +57,129 @@ void setup() {
   servo.attach(servoPin);
 
   // Configuración de los leds
-  pinMode(ledPin1, OUTPUT);
-  pinMode(ledPin2, OUTPUT);
+  pinMode(LED, OUTPUT);
+  pinMode(LED2, OUTPUT);
 }
 
--
+void loop()
+{
+  // Lectura de temperatura
+  float temperatura = obtenerTemperatura();
 
-int obtenerTemperatura() {
+  // Mostrar temperatura en el display LCD
+  lcd.setCursor(6, 0);
+  lcd.print(temperatura);
+
+  // Determinar estación del año
+  String estacion = obtenerEstacion(temperatura);
+
+  // Mostrar estación del año en el display LCD
+  lcd.setCursor(10, 1);
+  lcd.print(estacion);
+
+  // Verificar si se ha detectado un incendio
+  if (temperatura > temperaturaUmbral)
+  {
+    activarAlarma();
+  }
+  else
+  {
+    desactivarAlarma();
+  }
+
+  if (IrReceiver.decode())
+  {
+    Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
+    if (IrReceiver.decodedIRData.decodedRawData == Tecla_1)
+    {
+      activarSistemaIncendio();
+    }
+    else if (IrReceiver.decodedIRData.decodedRawData == Tecla_2)
+    {
+      desactivarSistemaIncendio();
+    }
+
+    IrReceiver.resume();
+  }
+}
+
+int obtenerTemperatura()
+{
   // Realizar la lectura del sensor de temperatura y calcular la temperatura en grados Celsius
   int lectura = analogRead(sensorPin);
   float voltaje = lectura * 5.0 / 1024.0;
   float temperaturaCelsius = (voltaje - 0.5) * 100;
+  float temperatura = ( lectura * (500.0 / 1023.0) ) - 50.0;
 
-  return (int)temperaturaCelsius;
+  return temperatura;
 }
 
-String obtenerEstacion(int temperatura) {
-  if (temperatura >= temperaturaInviernoMin && temperatura <= temperaturaInviernoMax) {
+String obtenerEstacion(float temperatura)
+{
+  if (temperatura >= temperaturaInviernoMin && temperatura <= temperaturaInviernoMax)
+  {
     return "Invierno";
-  } else if (temperatura >= temperaturaPrimaveraMin && temperatura <= temperaturaPrimaveraMax) {
+  }
+  else if (temperatura >= temperaturaPrimaveraMin && temperatura <= temperaturaPrimaveraMax)
+  {
     return "Primavera";
-  } else if (temperatura >= temperaturaVeranoMin && temperatura <= temperaturaVeranoMax) {
+  }
+  else if (temperatura >= temperaturaVeranoMin && temperatura <= temperaturaVeranoMax)
+  {
     return "Verano";
-  } else if (temperatura >= temperaturaOtonioMin && temperatura <= temperaturaOtonioMax) {
+  }
+  else if (temperatura >= temperaturaOtonioMin && temperatura <= temperaturaOtonioMax)
+  {
     return "Otonio";
-  } else {
+  }
+  else
+  {
     return "Desconocida";
   }
 }
 
-void activarAlarma() {
+void activarAlarma()
+{
   // Activar el servo motor y los leds de alarma
   servo.write(90);
-  digitalWrite(ledPin1, HIGH);
-  digitalWrite(ledPin2, HIGH);
+  digitalWrite(LED, HIGH);
+  digitalWrite(LED2, HIGH);
 
   // Mostrar mensaje de alarma en el display LCD
   lcd.setCursor(0, 1);
   lcd.print("ALARMA!");
 
-  delay(1000);  // Esperar 1 segundo
+  delay(1000); // Esperar 1 segundo
 }
 
-void desactivarAlarma() {
+void desactivarAlarma()
+{
   // Desactivar el servo motor y los leds de alarma
   servo.write(0);
-  digitalWrite(ledPin1, LOW);
-  digitalWrite(ledPin2, LOW);
+  digitalWrite(LED, LOW);
+  digitalWrite(LED2, LOW);
 
   // Borrar mensaje de alarma en el display LCD
   lcd.setCursor(0, 1);
   lcd.print("        ");
 }
 
-void activarSistemaIncendio() {
-  // Aquí puedes agregar el código necesario para activar el sistema de incendio
+void activarSistemaIncendio()
+{
+  digitalWrite(LED, HIGH);
+  digitalWrite(LED2, HIGH);
 
-  // Por ejemplo, encender una sirena o activar un sistema de rociadores de agua
-  // Puedes agregar aquí el código específico para tu sistema de incendio
-  // Asegúrate de conectar los componentes necesarios y configurarlos correctamente
-
-  // Ejemplo: encender un led para simular la activación del sistema de incendio
-  digitalWrite(ledPin1, HIGH);
-  digitalWrite(ledPin2, HIGH);
+  lcd.display();
+  sistemaIncendioActivo = true;
 }
 
-void desactivarSistemaIncendio() {
-  // Aquí puedes agregar el código necesario para desactivar el sistema de incendio
+void desactivarSistemaIncendio()
+{
+  digitalWrite(LED, LOW);
+  digitalWrite(LED2, LOW);
 
-  // Por ejemplo, apagar la sirena o detener el sistema de rociadores de agua
-  // Puedes agregar aquí el código específico para tu sistema de incendio
-  // Asegúrate de detener adecuadamente los componentes activados anteriormente
-
-  // Ejemplo: apagar el led que simula la activación del sistema de incendio
-  digitalWrite(ledPin1, LOW);
-  digitalWrite(ledPin2, LOW);
+  lcd.noDisplay();
+  sistemaIncendioActivo = false;
+  
 }
+
